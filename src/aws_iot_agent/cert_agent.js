@@ -4,30 +4,23 @@ const AWS = require('aws-sdk');
 const common = require('../../lib/common.js');
 const logger = require('../../lib/logger.js');
 
-AWS.config.loadFromPath( './config.json');
+AWS.config.loadFromPath( __dirname + '/config.json');
 
 const iot = new AWS.Iot();
 
 class CertAgent{
-  constructor(args={}){
-    this.arn = args.arn;
-    this.certPem = args.certPem;
-    this.caCertPem = args.caCertPem;
-    this.thingName = args.thingName;
-  }
-
-  async registerCertificate(){
+  async registerCertificate(certPem, caCertPem){
     return new Promise((resolve) => {
       const returnData = {error: null, data: null};
-      if(common.isEmptyString(this.certPem)
-        || common.isEmptyString(this.caCertPem)){
+      if(common.isEmptyString(certPem)
+        || common.isEmptyString(caCertPem)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
       const params = {
-        certificatePem: this.certPem,
-        caCertificatePem: this.caCertPem,
+        certificatePem: certPem,
+        caCertificatePem: caCertPem,
         status: 'ACTIVE'
       };
       iot.registerCertificate(params, function(err, data) {
@@ -45,21 +38,23 @@ class CertAgent{
     });
   }
 
-  async listAttachedPolicies(){
+  async updateCertificate(certID, newStatus){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
-      if(common.isEmptyString(this.arn)){
+      if(common.isEmptyString(certID)
+        ||common.isEmptyString(newStatus)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
       const params = {
-        target: this.arn,
-      };
-      iot.listAttachedPolicies(params, function(err, data) {
-        if (err){
-          returnData.error = new Error('listAttachedPolicies');
-          logger.loggerError.info({info: err.stack, source: 'listAttachedPolicies'});
+        certificateId: certID,
+        newStatus: newStatus
+      }
+      iot.updateCertificate(params, (err, data)=>{
+        if(err){
+          returnData.error = new Error('updateCertificateErr');
+          logger.loggerError.info({info: err.stack, source: 'updateCertificate'});
           resolve(returnData);
           return;
         }
@@ -70,26 +65,25 @@ class CertAgent{
     });
   }
 
-  async attachThingPrincipal(){
+  async deleteCertificate(certID){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
-      if(common.isEmptyString(this.arn)
-        || common.isEmptyString(this.thingName)){
+      if(common.isEmptyString(certID)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
       const params = {
-        principal: this.arn,
-        thingName: this.thingName
+        certificateId: certID
       };
-      iot.attachThingPrincipal(params, function(err) {
+      iot.deleteCertificate(params, (err, data)=>{
         if(err){
-          returnData.error = new Error('attachThingPrincipalErr');
-          logger.loggerError.info({info: err.stack, source: 'attachThingPrincipal'});
+          returnData.error = new Error('deleteCertificateErr');
+          logger.loggerError.info({info: err.stack, source: 'deleteCertificate'});
           resolve(returnData);
           return;
         }
+        returnData.data = data;
         resolve(returnData);
         return;
       });

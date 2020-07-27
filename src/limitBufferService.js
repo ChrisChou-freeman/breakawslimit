@@ -1,20 +1,21 @@
 'use strict';
 const awsLimit = require('./aws_iot_agent/limit.js');
+const conf = require('../conf.js');
 
-const ActionValue = {
-  AttachPolicy:               awsLimit.AttachPolicy,
-  AttachThingPrincipal:       awsLimit.AttachThingPrincipal,
-  AttachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
-  CreatePolicy:               awsLimit.CreatePolicy,
-  DetachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
-  DeleteCertificate:          awsLimit.DeleteCertificate,
-  DetachCertificate:          awsLimit.DetachThingPrincipal,
-  DetachPolicy:               awsLimit.DetachPolicy,
-  DeletePolicy:               awsLimit.DeletePolicy,
-  RegisterCertificate:        awsLimit.RegisterCertificate,
-  ListAttachedPolicies:       awsLimit.ListAttachedPolicies,
-  ListTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
-  UpdateCertificate:          awsLimit.UpdateCertificate,
+let ActionValue = {
+  attachPolicy:               awsLimit.AttachPolicy,
+  attachThingPrincipal:       awsLimit.AttachThingPrincipal,
+  attachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
+  createPolicy:               awsLimit.CreatePolicy,
+  detachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
+  deleteCertificate:          awsLimit.DeleteCertificate,
+  detachThingPrincipal:       awsLimit.DetachThingPrincipal,
+  detachPolicy:               awsLimit.DetachPolicy,
+  deletePolicy:               awsLimit.DeletePolicy,
+  registerCertificate:        awsLimit.RegisterCertificate,
+  listAttachedPolicies:       awsLimit.ListAttachedPolicies,
+  listTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
+  updateCertificate:          awsLimit.UpdateCertificate,
 }
 
 /**
@@ -27,6 +28,19 @@ const ActionValue = {
 	createPolicy(for)
 	attachPolicy(for)
   */
+/* recieve data form
+  {
+    ca: "",
+    certificate: "",
+    thingName: "",
+    needAttachPolicy: true/false,
+    prefixOfpolicyName: "xxx",
+    policies: [
+        {...},
+        {...},
+    ],
+  }
+*/
 function createCert(req, callback){
   const data = JSON.parse(req.request.data);
   console.log(data);
@@ -44,6 +58,16 @@ function createCert(req, callback){
 	createPolicy(for)
 	attachPolicy(for)
   */
+/* recieve data form
+  {
+    certificateARN: "xxx",
+    prefixOfpolicyName: "xxx",
+    policies: [
+        {...},
+        {...},
+    ]
+  }
+*/
 function updateCert(req, callback){
   const data = JSON.parse(req.request.data);
   console.log(data);
@@ -59,6 +83,11 @@ function updateCert(req, callback){
   updateCertificate
   deleteCertificate
   */
+/* recieve data form
+  {
+    certificateARN: "xxx",
+  }
+*/
 function revokeCert(req, callback){
   const data = JSON.parse(req.request.data);
   console.log(data);
