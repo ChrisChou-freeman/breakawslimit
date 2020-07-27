@@ -3,7 +3,9 @@ syntax = "proto3";
 package myserver;
 
 service Greeter {
-  rpc CreatePuserCert(ServerRequest) returns (ServerReply) {}
+  rpc CreateCert(ServerRequest) returns (ServerReply) {}
+  rpc UpdateCert(ServerRequest) returns (ServerReply) {}
+  rpc RevokeCert(ServerRequest) returns (ServerReply) {}
 }
 
 message ServerRequest{

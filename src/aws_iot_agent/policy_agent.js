@@ -136,7 +136,7 @@ class PolicyAgent{
         resolve(returnData);
         return;
       });
-    })
+    });
   }
 
   listAttachedPolicies(target){

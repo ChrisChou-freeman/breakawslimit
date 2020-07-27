@@ -12,5 +12,9 @@
   "dependencies": {
     "@grpc/proto-loader": "^0.1.0",
     "grpc": "^1.11.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bin/www"
   }
 }

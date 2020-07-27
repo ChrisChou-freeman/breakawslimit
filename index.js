@@ -3,7 +3,7 @@ const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 
 const conf = require('./conf.js');
-const createPuserCert = require('./src/createPuserCert.js');
+const limitBufferService = require('./src/limitBufferService.js');
 
 const packageDefinition = protoLoader.loadSync(
   conf.protosPath,
@@ -20,7 +20,9 @@ function main() {
   server.addService(
     limit_server_buffer.Greeter.service,
     {
-      createPuserCert: createPuserCert.main
+      createCert: limitBufferService.createCert,
+      updateCert: limitBufferService.updateCert,
+      revokeCert: limitBufferService.revokeCert
     }
   );
   server.bind('0.0.0.0:50055', grpc.ServerCredentials.createInsecure());

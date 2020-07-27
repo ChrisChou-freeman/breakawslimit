@@ -9,3 +9,6 @@ project break aws limit
 - 可配置的每秒额度上下限
 - 微服务架构,基于[Grpc](https://grpc.io)
 
+微服务演示代码:
+---------------
+  [公司gitlab](http://gitlab.sugrsugr.com/ChrisChou/grpcmicserverexample)
