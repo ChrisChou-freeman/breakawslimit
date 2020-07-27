@@ -1,0 +1,33 @@
+Project Break AWS limit
+
+registerUserCert:
+	registerCertificate
+
+	attachThingPrincipal
+
+	listTargetForPolicy(列出所有绑定当前)
+
+		detachPolicy (for)
+
+	deletePolicy(for)
+
+	createPolicy(for)
+
+	attachPolicy(for)
+
+UpdateUserPolicy:
+    listAttachedPolicies  // list cert attached policies
+
+    detachPolicy(for) //  detach attached policies
+
+    deletePolicy(for)  // delete detached policies
+
+    listTargetsForPolicy // list Policy attached target
+
+		detachPolicy (for)
+
+	deletePolicy(for)
+
+	createPolicy(for)
+
+	attachPolicy(for)

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package myserver;
+
+service Greeter {
+  rpc CreatePuserCert(ServerRequest) returns (ServerReply) {}
+}
+
+message ServerRequest{
+  string data= 1;
+}
+
+message ServerReply{
+  string response= 1;
+}
