@@ -4,19 +4,25 @@ const logRoot = __dirname;
 exports.infoLogPath = logRoot + '/log/info.log';
 exports.errLogPath = logRoot + '/log/err.log';
 exports.protosPath = __dirname + '/protos/limit_server_buffer.proto';
-exports.redis = {
-  redisHost: '',
-  redisPort: ''
-};
 
 exports.redis= {
-  redisHost:                  '127.0.0.1',
-  redisPort:                  '6379',
-  redisMainTaskSet:           'redisMainTaskSet',
-  redisMainTaskQueue:         'redisMainTaskQueue',
+  redisHost: '127.0.0.1',
+  redisPort: '6379',
+};
+
+exports.queueConfig= {
+  redisMainTaskSet: 'redisMainTaskSet',
   CreateCertificateQueue:     {
-    1: 'cc_registerCertificate',
-    2: 'cc_attachThingPrincipal',
+    1: {
+      name: 'cc_registerCertificate',
+      drawData: ['certificate', 'ca'],
+      putArgs: ['certificateArn']
+    },
+    2: {
+      name: 'cc_attachThingPrincipal',
+      drawData: ['certificateArn', 'thingName'],
+      putArgs: []
+    },
     3: 'cc_listTargetsForPolicy',
     4: 'cc_detachPolicy',
     5: 'cc_deletePolicy',
@@ -38,6 +44,6 @@ exports.redis= {
     2: 'rc_listTargetsForPolicy',
     3: 'rc_detachPolicy',
     4: 'rc_deletePolicy',
-    5: 'rc_deleteCertificate'
+    5: 'rc_deleteCertificate',
   }
-}
+};

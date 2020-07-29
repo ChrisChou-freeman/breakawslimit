@@ -12,3 +12,4 @@ project break aws limit
 微服务演示代码:
 ---------------
   [公司gitlab](http://gitlab.sugrsugr.com/ChrisChou/grpcmicserverexample)
+  [设计思路](https://www.processon.com/view/link/5ef2aadee0b34d4dba522703)

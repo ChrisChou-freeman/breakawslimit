@@ -9,7 +9,6 @@ AWS.config.loadFromPath( './config.json');
 const iot = new AWS.Iot();
 
 class ThingAgent{
-
   async detachThingPrincipal(principal, thingName){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
@@ -37,18 +36,18 @@ class ThingAgent{
     });
   }
 
-  async attachThingPrincipal(principal){
+  async attachThingPrincipal(principal, thingName){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
       if(common.isEmptyString(principal)
-        || common.isEmptyString(this.thingName)){
+        || common.isEmptyString(thingName)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
       const params = {
         principal: principal,
-        thingName: this.thingName
+        thingName: thingName
       };
       iot.attachThingPrincipal(params, function(err, data) {
         if(err){
