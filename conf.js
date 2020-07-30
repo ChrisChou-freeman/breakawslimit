@@ -12,38 +12,62 @@ exports.redis= {
 
 exports.queueConfig= {
   redisMainTaskSet: 'redisMainTaskSet',
-  CreateCertificateQueue:     {
-    1: {
+  CreateCertificateQueue:     [
+    {
       name: 'cc_registerCertificate',
       drawData: ['certificate', 'ca'],
       putArgs: ['certificateArn']
     },
-    2: {
+    {
       name: 'cc_attachThingPrincipal',
       drawData: ['certificateArn', 'thingName'],
       putArgs: []
     },
-    3: 'cc_listTargetsForPolicy',
-    4: 'cc_detachPolicy',
-    5: 'cc_deletePolicy',
-    6: 'cc_createPolicy',
-    7: 'cc_attachPolicy',
-  },
-  UpdatCertificateQueue:      {
-    1: 'uc_listAttachedPolicies',
-    2: 'uc_detachPolicy',
-    3: 'uc_deletePolicy',
-    4: 'uc_listTargetsForPolicy',
-    5: 'uc_detachPolicy',
-    6: 'uc_deletePolicy',
-    7: 'uc_createPolicy',
-    8: 'uc_attachPolicy',
-  },
-  RevokeCertificateQueue:     {
-    1: 'rc_detachThingPrincipal',
-    2: 'rc_listTargetsForPolicy',
-    3: 'rc_detachPolicy',
-    4: 'rc_deletePolicy',
-    5: 'rc_deleteCertificate',
-  }
+    {
+      name: 'cc_listTargetsForPolicy',
+      drawData: ['policyName'],
+      putArgs: ['targets']
+    },
+    {
+      name: 'cc_detachPolicy',
+      drawData: ['policyName', 'subMession:index'],
+      putArgs: [],
+      subMession: 'targets',
+    },
+    {
+      name: 'cc_deletePolicy',
+      drawData: ['policyName'],
+      putArgs: [],
+    },
+    {
+      name: 'cc_createPolicy',
+      drawData: ['addtion:index:policyName', 'subMession:index'],
+      putArgs: ['subMession:policyName:policyNames'],
+      subMession: 'policies',
+    },
+    {
+      name: 'cc_attachPolicy',
+      drawData: ['subMession:index', 'certificateArn'],
+      putArgs: [],
+      subMession: 'policyNames',
+    },
+  ],
+
+  // UpdatCertificateQueue:      {
+  //   1: 'uc_listAttachedPolicies',
+  //   2: 'uc_detachPolicy',
+  //   3: 'uc_deletePolicy',
+  //   4: 'uc_listTargetsForPolicy',
+  //   5: 'uc_detachPolicy',
+  //   6: 'uc_deletePolicy',
+  //   7: 'uc_createPolicy',
+  //   8: 'uc_attachPolicy',
+  // },
+  // RevokeCertificateQueue:     {
+  //   1: 'rc_detachThingPrincipal',
+  //   2: 'rc_listTargetsForPolicy',
+  //   3: 'rc_detachPolicy',
+  //   4: 'rc_deletePolicy',
+  //   5: 'rc_deleteCertificate',
+  // }
 };

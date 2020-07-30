@@ -107,4 +107,4 @@ const awsLimit = {
   UpdateThingGroup: 15
 }
 
-module.exports.awsLimit = awsLimit;
+module.exports = awsLimit;

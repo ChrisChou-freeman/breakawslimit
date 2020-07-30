@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const common = require('../../lib/common.js');
 const logger = require('../../lib/logger.js');
 
-AWS.config.loadFromPath( './config.json');
+AWS.config.loadFromPath( __dirname + '/config.json');
 
 const iot = new AWS.Iot();
 
