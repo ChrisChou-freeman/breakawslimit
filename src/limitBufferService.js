@@ -47,7 +47,7 @@ async function checkHasMember(args){
   return returnData;
 }
 
-function createEvent(eventValue, callback){
+function registerEvent(eventValue, callback){
   const taskSuccessEvent = eventValue + '_Success';
   const taskErrEvent = eventValue + '_Error';
   ServerFeedbackEvent.addListener(taskSuccessEvent, function(){
@@ -101,8 +101,6 @@ async function popQueueItem(args) {
   returnData.data = result.data;
   return returnData;
 }
-
-
 
 /**
   * recieve data form
@@ -170,7 +168,7 @@ async function createCert(req, callback){
     return;
   }
 
-  createEvent(md5Value, callback);
+  registerEvent(md5Value, callback);
 }
 
 /**
@@ -412,6 +410,25 @@ async function sendTask(args){
   }
 
   taskStepStatus[taskName][step] = false;
+  return;
+}
+
+function resetAvtionValue(){
+    ActionValue = {
+      attachPolicy:               awsLimit.AttachPolicy,
+      attachThingPrincipal:       awsLimit.AttachThingPrincipal,
+      attachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
+      createPolicy:               awsLimit.CreatePolicy,
+      detachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
+      deleteCertificate:          awsLimit.DeleteCertificate,
+      detachThingPrincipal:       awsLimit.DetachThingPrincipal,
+      detachPolicy:               awsLimit.DetachPolicy,
+      deletePolicy:               awsLimit.DeletePolicy,
+      registerCertificate:        awsLimit.RegisterCertificate,
+      listAttachedPolicies:       awsLimit.ListAttachedPolicies,
+      listTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
+      updateCertificate:          awsLimit.UpdateCertificate,
+    };
 }
 
 let taskEngine;
@@ -446,22 +463,7 @@ function startTask(){
           }
         }
       }
-
-      ActionValue = {
-        attachPolicy:               awsLimit.AttachPolicy,
-        attachThingPrincipal:       awsLimit.AttachThingPrincipal,
-        attachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
-        createPolicy:               awsLimit.CreatePolicy,
-        detachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
-        deleteCertificate:          awsLimit.DeleteCertificate,
-        detachThingPrincipal:       awsLimit.DetachThingPrincipal,
-        detachPolicy:               awsLimit.DetachPolicy,
-        deletePolicy:               awsLimit.DeletePolicy,
-        registerCertificate:        awsLimit.RegisterCertificate,
-        listAttachedPolicies:       awsLimit.ListAttachedPolicies,
-        listTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
-        updateCertificate:          awsLimit.UpdateCertificate,
-      };
+      resetAvtionValue();
     }, 1000);
   }
 }
