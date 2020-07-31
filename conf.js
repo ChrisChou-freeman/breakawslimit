@@ -53,16 +53,33 @@ exports.queueConfig= {
     },
   ],
 
-  // UpdatCertificateQueue:      {
-  //   1: 'uc_listAttachedPolicies',
-  //   2: 'uc_detachPolicy',
-  //   3: 'uc_deletePolicy',
-  //   4: 'uc_listTargetsForPolicy',
-  //   5: 'uc_detachPolicy',
-  //   6: 'uc_deletePolicy',
-  //   7: 'uc_createPolicy',
-  //   8: 'uc_attachPolicy',
-  // },
+  // UpdatCertificateQueue:      [
+  //   {
+  //     name: 'uc_listAttachedPolicies',
+  //   },
+  //   {
+  //     name: 'uc_detachPolicy',
+  //   },
+  //   {
+  //     name: 'uc_deletePolicy',
+  //   },
+  //   {
+  //     name: 'uc_listTargetsForPolicy',
+  //   },
+  //   {
+  //     name: 'uc_detachPolicy',
+  //   },
+  //   {
+  //     name: 'uc_deletePolicy',
+  //   },
+  //   {
+  //     name: 'uc_createPolicy',
+  //   },
+  //   {
+  //     name: 'uc_attachPolicy',
+  //   },
+  // ],
+
   // RevokeCertificateQueue:     {
   //   1: 'rc_detachThingPrincipal',
   //   2: 'rc_listTargetsForPolicy',

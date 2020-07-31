@@ -27,6 +27,7 @@ function main() {
   );
   server.bind('0.0.0.0:50055', grpc.ServerCredentials.createInsecure());
   server.start();
+  limitBufferService.startTask();
 }
 
 main();
