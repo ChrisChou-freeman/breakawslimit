@@ -35,7 +35,7 @@ function genDeviceCert(){
 }
 
 function genPolicy(policyNum){
-    const policyArray = new Array();
+    const policyArray = [];
     for(let i=0; i<policyNum; i++){
         const data = fs.readFileSync(__dirname + '/policy_template.json').toString();
         policyArray.push(data);

@@ -3,9 +3,9 @@ const fs = require('fs');
 
 const tools = require('./tools');
 
-async function createCert(client, policyName='test_thing_chris'){
+async function createCert(client, policyName='test_thing_chris', policyNumber=5){
   const deviceCert = await tools.genDeviceCert();
-  const policies = tools.genPolicy(5);
+  const policies = tools.genPolicy(policyNumber);
   const requestData = {
     ca: fs.readFileSync(__dirname + '/caroot/rootCA.pem').toString(),
     certificate: deviceCert,

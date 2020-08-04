@@ -21,9 +21,9 @@ function main() {
     'localhost:50055',
     grpc.credentials.createInsecure()
   );
-  testCreateCert(client);
-  testCreateCert(client, 'test_policy_chris2');
-  testCreateCert(client, 'test_policy_chris3');
+  testCreateCert(client, 'test_policy_chris1', 10);
+  testCreateCert(client, 'test_policy_chris2', 10);
+  // testCreateCert(client, 'test_policy_chris3');
   // testUpdateCert(client);
 }
 
