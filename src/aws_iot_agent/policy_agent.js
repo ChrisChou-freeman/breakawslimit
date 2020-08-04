@@ -9,9 +9,9 @@ AWS.config.loadFromPath( __dirname + '/config.json');
 const iot = new AWS.Iot();
 
 class PolicyAgent{
-  listTargetsForPolicy(policyName){
+  async listTargetsForPolicy(policyName){
     return new Promise((resolve)=>{
-      const returnData = {error: null, data: null};
+      const returnData = {error: null, data: {}};
       if(common.isEmptyString(policyName)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
@@ -22,19 +22,25 @@ class PolicyAgent{
       };
       iot.listTargetsForPolicy(params, function(err, data) {
         if(err){
+          if(err.code=='ResourceNotFoundException'){
+            resolve(returnData);
+            return;
+          }
           returnData.error = new Error('listTargetsForPolicyErr');
           logger.loggerError.info({info: err.stack, source: 'listTargetsForPolicy'});
           resolve(returnData);
           return;
         }
-        returnData.data = data;
+        returnData.data['targets'] = data['targets'].map((a)=>{
+          return {target: a, policyName: policyName};
+        });
         resolve(returnData);
         return;
       });
     });
   }
 
-  detachPolicy(policyName, target){
+  async detachPolicy(target, policyName){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
       if(common.isEmptyString(policyName)
@@ -61,7 +67,7 @@ class PolicyAgent{
     });
   }
 
-  deletePolicy(policyName){
+  async deletePolicy(policyName){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
       if(common.isEmptyString(policyName)){
@@ -85,7 +91,7 @@ class PolicyAgent{
     });
   }
 
-  createPolicy(policyName, policyDoc){
+ async createPolicy(policyName, policyDoc){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
       if(common.isEmptyString(policyName)
@@ -112,7 +118,7 @@ class PolicyAgent{
     });
   }
 
-  attachPolicy(policyName, target){
+  async attachPolicy(policyName, target){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
       if(common.isEmptyString(policyName)
@@ -139,9 +145,9 @@ class PolicyAgent{
     });
   }
 
-  listAttachedPolicies(target){
+  async listAttachedPolicies(target){
     return new Promise((resolve)=>{
-      const returnData = {error: null, data: null};
+      const returnData = {error: null, data: {}};
       if(common.isEmptyString(target)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
@@ -151,13 +157,16 @@ class PolicyAgent{
         target: target
       };
       iot.listAttachedPolicies(params, function(err, data) {
-        if (err){
+        if(err){
           returnData.error = new Error('listAttachedPoliciesErr');
           logger.loggerError.info({info: err.stack, source: 'listAttachedPolicies'});
           resolve(returnData);
           return;
         }
-        returnData.data = data;
+        returnData.data['attachedPolicies'] = data['policies'].map((item)=>{
+          item['target'] = target;
+          return item;
+        });
         resolve(returnData);
         return;
       });

@@ -1,36 +1,34 @@
 'use strict';
+const util = require('util');
 const Events = require('events');
 
-const awsLimit = require('./aws_iot_agent/limit.js');
 const conf = require('../conf.js');
 const logger = require('../lib/logger.js');
 const redisCli = require('../lib/redis.js');
-const tools = require('./tools.js');
-const certManage = require('./aws_iot_agent/cert_agent.js');
-const policyManage = require('./aws_iot_agent/policy_agent.js');
-const thingManage = require('./aws_iot_agent/thing_agent.js');
+const tools = require('../lib/tools.js');
+const awsIotAgent = require('./aws_iot_agent');
 const common = require('../lib/common.js');
 
 const ServerFeedbackEvent = new Events();
+const ERROR_TIME_LIMIT = 10;
 
 let ActionValue = {
-  attachPolicy:               awsLimit.AttachPolicy,
-  attachThingPrincipal:       awsLimit.AttachThingPrincipal,
-  attachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
-  createPolicy:               awsLimit.CreatePolicy,
-  detachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
-  deleteCertificate:          awsLimit.DeleteCertificate,
-  detachThingPrincipal:       awsLimit.DetachThingPrincipal,
-  detachPolicy:               awsLimit.DetachPolicy,
-  deletePolicy:               awsLimit.DeletePolicy,
-  registerCertificate:        awsLimit.RegisterCertificate,
-  listAttachedPolicies:       awsLimit.ListAttachedPolicies,
-  listTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
-  updateCertificate:          awsLimit.UpdateCertificate,
+  attachPolicy:               awsIotAgent.limit.AttachPolicy,
+  attachThingPrincipal:       awsIotAgent.limit.AttachThingPrincipal,
+  attachPrincipalPolicy:      awsIotAgent.limit.AttachPrincipalPolicy,
+  createPolicy:               awsIotAgent.limit.CreatePolicy,
+  detachPrincipalPolicy:      awsIotAgent.limit.DetachPrincipalPolicy,
+  deleteCertificate:          awsIotAgent.limit.DeleteCertificate,
+  detachThingPrincipal:       awsIotAgent.limit.DetachThingPrincipal,
+  detachPolicy:               awsIotAgent.limit.DetachPolicy,
+  deletePolicy:               awsIotAgent.limit.DeletePolicy,
+  registerCertificate:        awsIotAgent.limit.RegisterCertificate,
+  listAttachedPolicies:       awsIotAgent.limit.ListAttachedPolicies,
+  listTargetsForPolicy:       awsIotAgent.limit.ListTargetsForPolicy,
+  updateCertificate:          awsIotAgent.limit.UpdateCertificate,
 };
 
 const taskStepStatus = {};
-const ERROR_TIME_LIMIT = 10;
 
 async function checkHasMember(args){
   const returnData = {error: null, data: false};
@@ -66,7 +64,7 @@ function registerEvent(eventValue, callback){
 
 function triggerEvent(eventName){
   ServerFeedbackEvent.emit(eventName);
-  ServerFeedbackEvent.removeListener(eventName);
+  ServerFeedbackEvent.removeListener(eventName, ()=>{});
 }
 
 async function deleteTask(args){
@@ -116,17 +114,22 @@ async function popQueueItem(args) {
   }
 */
 async function createCert(req, callback){
-  if(common.isEmptyString(req.request.data.ca)
-    || common.isEmptyString(req.request.data.certificate)
-    || common.isEmptyString(req.request.data.thingName)){
-    const responseData = {status: false, info: 'ErrRequest'};
+  const responseData = {status: false, info: ''};
+  const requestData = JSON.parse(req.request.data);
+  console.log('start createCert>>>');
+  if(common.isEmptyString(requestData.ca)
+    || common.isEmptyString(requestData.certificate)
+    || common.isEmptyString(requestData.thingName)){
+    responseData.info = 'ErrRequest';
     callback(null, {response: JSON.stringify(responseData)});
+    return;
   }
   const redisConn = new redisCli();
   const connectResult = await redisConn.connect();
   if(connectResult.error){
     logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
-    callback(null, {response: JSON.stringify({status: false, info: '503'})});
+    responseData.info = '503';
+    callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   const md5Value = tools.genMd5(req.request.data);
@@ -136,33 +139,32 @@ async function createCert(req, callback){
   });
 
   if(hasMember.error){
-    const responseData = {status: false, info: hasMember.error.message};
+    responseData.info = hasMember.error.message;
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   if(hasMember.data){
-    const responseData = {status: false, info: 'repeatRequestErr'};
+    responseData.info = 'repeatRequestErr';
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
 
-  const data = JSON.parse(req.request.data);
-  data.md5Value = md5Value;
-  const jsonData = JSON.stringify(data);
+  requestData.md5Value = md5Value;
+  const jsonData = JSON.stringify(requestData);
   const resultList = await Promise.all([
-    redisConn.lpush(conf.queueConfig.CreateCertificateQueue[1], jsonData),
+    redisConn.lpush(conf.queueConfig.CreateCertificateQueue[0].name, jsonData),
     redisConn.sadd(conf.queueConfig.redisMainTaskSet, md5Value)
   ]);
   const pushResult = resultList[0];
   const addResult = resultList[1];
   if(pushResult.error){
-    const responseData = {status: false, info: '503'};
+    responseData.info = '503';
     logger.loggerError.info('CreateCertificateQueueLpushErr>>', pushResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   if(addResult.error){
-    const responseData = {status: false, info: '503'};
+    responseData.info = '503';
     logger.loggerError.info('CreateCertificateQueueSaddErr>>', addResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
@@ -174,18 +176,72 @@ async function createCert(req, callback){
 /**
   recieve data form
   {
-    certificateARN: "xxx",
-    prefixOfpolicyName: "xxx",
+    certificateArn: "xxx",
+    policyName: "xxx",
     policies: [
         {...},
         {...},
     ]
   }
 */
-function updateCert(req, callback){
-  const data = JSON.parse(req.request.data);
-  console.log(data);
-  callback(null, {response: req.request.data});
+async function updateCert(req, callback){
+  const responseData = {status: false, info: ''};
+  const requestData = JSON.parse(req.request.data);
+  console.log('start updateCert>>>');
+  if(common.isEmptyString(requestData.certificateArn)
+    || common.isEmptyString(requestData.policyName)
+    || common.isEmptyArray(requestData.policies)){
+    responseData.info = 'ErrRequest';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  const redisConn = new redisCli();
+  const connectResult = await redisConn.connect();
+  if(connectResult.error){
+    logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    responseData.info = '503';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  const md5Value = tools.genMd5(req.request.data);
+  const hasMember = await checkHasMember({
+    redisConn: redisConn,
+    md5Value: md5Value
+  });
+
+  if(hasMember.error){
+    responseData.info = hasMember.error.message;
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  if(hasMember.data){
+    responseData.info = 'repeatRequestErr';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+
+  requestData.md5Value = md5Value;
+  const jsonData = JSON.stringify(requestData);
+  const resultList = await Promise.all([
+    redisConn.lpush(conf.queueConfig.UpdatCertificateQueue[0].name, jsonData),
+    redisConn.sadd(conf.queueConfig.redisMainTaskSet, md5Value)
+  ]);
+  const pushResult = resultList[0];
+  const addResult = resultList[1];
+  if(pushResult.error){
+    responseData.info = '503';
+    logger.loggerError.info('updateCertificateQueueLpushErr>>', pushResult.error.stack);
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  if(addResult.error){
+    responseData.info = '503';
+    logger.loggerError.info('updateCertificateQueueSaddErr>>', addResult.error.stack);
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+
+  registerEvent(md5Value, callback);
 }
 
 /**
@@ -203,11 +259,10 @@ function revokeCert(req, callback){
 async function handelResult(args){
   const taskName = args.taskName;
   const currentQueueName = args.currentQueueName;
-  const nextQueueName = conf.queueConfig[taskName][step+1];
   const dataResult = args.dataResult;
   const dataPool = args.dataPool;
   const redisConn = args.redisConn;
-  const step = args.step;
+  let step = args.step;
   const i = args.resultIndex;
   const errorEvnentName  = args.dataPool[i].md5Value + '_Error';
   const successEventName = args.dataPool[i].md5Value + '_Success';
@@ -215,6 +270,10 @@ async function handelResult(args){
   const subMession = conf.queueConfig[taskName][step]['subMession'];
   const subMessionIndex = args.subMessionIndex;
   const subMessionLength = args.subMessionLength;
+  const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
+  let jumpValue = null;
+
+  console.log('dataResult>>>', dataResult);
 
   if(dataResult.error){
     if(dataPool[i].errTime === undefined){
@@ -236,10 +295,63 @@ async function handelResult(args){
         md5Value: dataPool[i].md5Value
       });
       triggerEvent(errorEvnentName);
+      return;
+    }
+    return;
+  }
+
+  if(!common.isEmptyObj(dataResult.data)){
+    for(let i=0;i<putArgs.length;i++){
+      const element = putArgs[i];
+      if(element.startsWith('subMession:')){
+        let argName = element.split(':')[1];
+        const argsAliaName = element.split(':')[2];
+        console.log('dataResult__data>>>', dataResult.data);
+        console.log('argName>>>', argName);
+        if(dataPool[i][argsAliaName] == undefined){
+          dataPool[i][argsAliaName] = [];
+        }
+        if(util.isArray(dataResult.data[argName])){
+          for(let j=0;j<dataResult.data[argName].length;j++){
+            let element2 = dataResult.data[argName][j];
+            dataPool[i][argsAliaName].push(element2);
+          }
+        }else{
+          const pushData = dataResult.data[argName];
+          dataPool[i][argsAliaName].push(pushData);
+        }
+      }else{
+        dataPool[i][element] = dataResult.data[element];
+      }
     }
   }
 
-  if(step>=conf.queueConfig[taskName].length){
+  if(jumpCondition != undefined){
+    const conditionSplit = jumpCondition.split(':');
+    const conditionArg = conditionSplit[0];
+    const condition = conditionSplit[1];
+    const jumpLocation = conditionSplit[2];
+    switch(condition){
+      case 'Empty':
+        if(subMession != undefined
+          && subMessionIndex == subMessionLength-1
+          && common.isEmptyArray(dataPool[i][conditionArg])){
+          console.log('jumpCondition dataPool>>>', dataPool[i])
+          jumpValue = step + parseInt(jumpLocation);
+        }else if(common.isEmptyObj(dataPool[i][conditionArg])){
+          jumpValue = step + parseInt(jumpLocation);
+        }
+        break;
+    }
+  }
+
+  let pushResult2;
+  let nextStep = step + 1;
+  if(jumpValue != null){
+    nextStep = jumpValue;
+  }
+
+  if(nextStep>=conf.queueConfig[taskName].length){
     await deleteTask({
       redisConn: redisConn,
       md5Value: dataPool[i].md5Value
@@ -248,23 +360,11 @@ async function handelResult(args){
     return;
   }
 
-  for(let i=0;i<putArgs.length;i++){
-    const element = putArgs[i];
-    if(element.startsWith('subMession:')){
-      const argName = element.split(':')[1];
-      const argsAliaName = element.split(':')[2];
-      if(dataPool[i][argsAliaName] == undefined){
-        dataPool[i][argsAliaName] = [];
-      }
-      dataPool[i][argsAliaName].push(dataResult.data[argName]);
-    }else{
-      dataPool[i][putArgs[i]] = dataResult.data[element];
-    }
-  }
-
-  let pushResult2;
   if(subMession === undefined){
-    pushResult2 = await redisConn.lpush(nextQueueName, JSON.stringify(dataPool[i]));
+    console.log('nextStep:', nextStep);
+    console.log('taskName:', taskName);
+    console.log(JSON.stringify(dataPool[i]));
+    pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[i]));
   }else{
     const subMessionProcessName = `${subMession}Process`;
     if(dataPool[i][subMessionProcessName]===undefined){
@@ -273,7 +373,10 @@ async function handelResult(args){
     dataPool[i][subMessionProcessName]++;
     if(subMessionIndex == subMessionLength-1){
       if(dataPool[i][subMessionProcessName] >= dataPool[i][subMession].length){
-        pushResult2 = await redisConn.lpush(nextQueueName, JSON.stringify(dataPool[i]));
+        console.log('nextStep:', nextStep);
+        console.log('taskName:', taskName);
+        console.log(JSON.stringify(dataPool[i]));
+        pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[i]));
       }else{
         pushResult2 = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[i]));
       }
@@ -291,7 +394,6 @@ async function handelResult(args){
 }
 
 async function sendTask(args){
-  taskStepStatus[taskName][step] = true;
   const step = args.step;
   const redisConn = args.redisConn;
   const certObj = args.certObj;
@@ -302,10 +404,11 @@ async function sendTask(args){
   const funcName= currentQueueName.split('_')[1];
   const taskNumber = await redisConn.llen(currentQueueName);
   const promiseList = [];
-  const promiseListSubs = [];
+  let promiseListSubs = [];
   const dataPool = [];
   const taskFunctin = certObj[funcName] || policyObj[funcName] || thingObj[funcName];
   const subMession = conf.queueConfig[taskName][step]['subMession'];
+  taskStepStatus[taskName][step] = true;
 
   if(!taskFunctin){
     logger.loggerError.info('sendTaskFuncNameErr>>', funcName);
@@ -331,9 +434,7 @@ async function sendTask(args){
         drawDataArgs.push(objData[drawData[j]]);
       }
       ActionValue[funcName]--;
-      promiseList.push(
-        taskFunctin(...drawDataArgs)
-      );
+      promiseList.push(taskFunctin(...drawDataArgs));
     }else{
       const subPromiseList = [];
       const drawData = conf.queueConfig[taskName][step]['drawData'];
@@ -348,6 +449,12 @@ async function sendTask(args){
             const subMessionKey = element.split(':')[1];
             if(subMessionKey == 'index'){
               drawDataArgs.push(objData[subMession][j]);
+            }else if(subMessionKey == 'object'){
+              const objKeys= element.split(':').splice(2,);
+              const objValue = objKeys.map((item)=>{
+                return objData[subMession][j][item];
+              });
+              drawDataArgs.push(...objValue);
             }else{
               drawDataArgs.push(objData[subMession][subMessionKey]);
             }
@@ -388,10 +495,12 @@ async function sendTask(args){
       });
     }
   }else if(promiseListSubs.length>0){
-    promiseListSubs.map((a)=>{return Promise.all(a);});
+    console.log('promiseListSubs>>>', promiseListSubs);
+    promiseListSubs = promiseListSubs.map((a)=>{return Promise.all(a);});
+    console.log('promiseListSubs2>>>', promiseListSubs)
     const promiseListSubsResult = await Promise.all(promiseListSubs);
     for(let i=0;i<promiseListSubsResult.length;i++){
-      const subResultElement = promiseListSubs[i];
+      const subResultElement = promiseListSubsResult[i];
       for(let j=0;j<subResultElement.length;j++){
         await handelResult({
           taskName: taskName,
@@ -415,54 +524,68 @@ async function sendTask(args){
 
 function resetAvtionValue(){
     ActionValue = {
-      attachPolicy:               awsLimit.AttachPolicy,
-      attachThingPrincipal:       awsLimit.AttachThingPrincipal,
-      attachPrincipalPolicy:      awsLimit.AttachPrincipalPolicy,
-      createPolicy:               awsLimit.CreatePolicy,
-      detachPrincipalPolicy:      awsLimit.DetachPrincipalPolicy,
-      deleteCertificate:          awsLimit.DeleteCertificate,
-      detachThingPrincipal:       awsLimit.DetachThingPrincipal,
-      detachPolicy:               awsLimit.DetachPolicy,
-      deletePolicy:               awsLimit.DeletePolicy,
-      registerCertificate:        awsLimit.RegisterCertificate,
-      listAttachedPolicies:       awsLimit.ListAttachedPolicies,
-      listTargetsForPolicy:       awsLimit.ListTargetsForPolicy,
-      updateCertificate:          awsLimit.UpdateCertificate,
+      attachPolicy:               awsIotAgent.limit.AttachPolicy,
+      attachThingPrincipal:       awsIotAgent.limit.AttachThingPrincipal,
+      attachPrincipalPolicy:      awsIotAgent.limit.AttachPrincipalPolicy,
+      createPolicy:               awsIotAgent.limit.CreatePolicy,
+      detachPrincipalPolicy:      awsIotAgent.limit.DetachPrincipalPolicy,
+      deleteCertificate:          awsIotAgent.limit.DeleteCertificate,
+      detachThingPrincipal:       awsIotAgent.limit.DetachThingPrincipal,
+      detachPolicy:               awsIotAgent.limit.DetachPolicy,
+      deletePolicy:               awsIotAgent.limit.DeletePolicy,
+      registerCertificate:        awsIotAgent.limit.RegisterCertificate,
+      listAttachedPolicies:       awsIotAgent.limit.ListAttachedPolicies,
+      listTargetsForPolicy:       awsIotAgent.limit.ListTargetsForPolicy,
+      updateCertificate:          awsIotAgent.limit.UpdateCertificate,
     };
+}
+
+function runConfigTask(args){
+  for(let taskName in conf.queueConfig){
+    if(typeof conf.queueConfig[taskName] == 'string'){
+      continue;
+    }
+    for(let step=0;step<conf.queueConfig[taskName].length;step++){
+      if(taskStepStatus[taskName] === undefined){
+        taskStepStatus[taskName] = {};
+      }
+      if(taskStepStatus[taskName][step] === undefined){
+        taskStepStatus[taskName][step] = false;
+      }
+
+      if(taskStepStatus[taskName][step] === false){
+        try{
+          sendTask({
+            step: step,
+            redisConn: args.redisConn,
+            certObj: args.certObj,
+            policyObj: args.policyObj,
+            thingObj: args.thingObj,
+            taskName: taskName
+          });
+        }catch(error){
+          logger.loggerError.info('sendTaskErr>>>', error.stack);
+          taskStepStatus[taskName][step] = false;
+        }
+      }
+    }
+  }
 }
 
 let taskEngine;
 function startTask(){
   if(taskEngine === undefined){
     const redisConn = new redisCli();
-    const certObj = new certManage();
-    const policyObj = new policyManage();
-    const thingObj = new thingManage();
+    const certObj = new awsIotAgent.CertAgent();
+    const policyObj = new awsIotAgent.PolicyAgent();
+    const thingObj = new awsIotAgent.ThingAgent();
     taskEngine = setInterval(()=>{
-      for(let taskName in conf.queueConfig){
-        if(typeof conf.queueConfig[taskName] == 'string'){
-          continue;
-        }
-        for(let step=0;step<conf.queueConfig[taskName].length;step++){
-          if(taskStepStatus[taskName] === undefined){
-            taskStepStatus[taskName] = {};
-          }
-          if(taskStepStatus[taskName][step] === undefined){
-            taskStepStatus[taskName][step] = false;
-          }
-
-          if(taskStepStatus[taskName][step] === false){
-            sendTask({
-              step: step,
-              redisConn: redisConn,
-              certObj: certObj,
-              policyObj: policyObj,
-              thingObj: thingObj,
-              taskName: taskName
-            });
-          }
-        }
-      }
+      runConfigTask({
+        redisConn: redisConn,
+        certObj: certObj,
+        policyObj: policyObj,
+        thingObj: thingObj
+      });
       resetAvtionValue();
     }, 1000);
   }

@@ -1,6 +1,6 @@
 'use strict'
+// https://docs.aws.amazon.com/zh_cn/general/latest/gr/iot-core.html#1-click-throttling
 const awsLimit = {
-  // https://docs.aws.amazon.com/zh_cn/general/latest/gr/iot-core.html#1-click-throttling
   AcceptCertificateTransfer: 10,
   AddThingToBillingGroup: 60,
   AddThingToThingGroup: 60,
