@@ -148,7 +148,6 @@ async function createCert(req, callback){
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
-
   requestData.md5Value = md5Value;
   const jsonData = JSON.stringify(requestData);
   const resultList = await Promise.all([
@@ -263,9 +262,9 @@ async function handelResult(args){
   const dataPool = args.dataPool;
   const redisConn = args.redisConn;
   let step = args.step;
-  const i = args.resultIndex;
-  const errorEvnentName  = args.dataPool[i].md5Value + '_Error';
-  const successEventName = args.dataPool[i].md5Value + '_Success';
+  const resultIndex = args.resultIndex;
+  const errorEvnentName  = args.dataPool[resultIndex].md5Value + '_Error';
+  const successEventName = args.dataPool[resultIndex].md5Value + '_Success';
   const putArgs = args.putArgs;
   const subMession = conf.queueConfig[taskName][step]['subMession'];
   const subMessionIndex = args.subMessionIndex;
@@ -273,26 +272,26 @@ async function handelResult(args){
   const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
   let jumpValue = null;
 
-  console.log('dataResult>>>', dataResult);
+  console.log(`step:${step} dataResult>>>`, dataResult);
 
   if(dataResult.error){
-    if(dataPool[i].errTime === undefined){
-      dataPool[i].errTime = 0;
+    if(dataPool[resultIndex].errTime === undefined){
+      dataPool[resultIndex].errTime = 0;
     }
-    if(dataPool[i].errTime >= ERROR_TIME_LIMIT){
+    if(dataPool[resultIndex].errTime >= ERROR_TIME_LIMIT){
       await deleteTask({
         redisConn: redisConn,
-        md5Value: dataPool[i].md5Value
+        md5Value: dataPool[resultIndex].md5Value
       });
       triggerEvent(errorEvnentName);
     }
-    dataPool[i].errTime++;
-    const pushResult = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[i]));
+    dataPool[resultIndex].errTime++;
+    const pushResult = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[resultIndex]));
     if(pushResult.error){
       logger.loggerError.info(`${currentQueueName} Step${step} Err>>`, pushResult.error.stack);
       await deleteTask({
         redisConn: redisConn,
-        md5Value: dataPool[i].md5Value
+        md5Value: dataPool[resultIndex].md5Value
       });
       triggerEvent(errorEvnentName);
       return;
@@ -308,20 +307,20 @@ async function handelResult(args){
         const argsAliaName = element.split(':')[2];
         console.log('dataResult__data>>>', dataResult.data);
         console.log('argName>>>', argName);
-        if(dataPool[i][argsAliaName] == undefined){
-          dataPool[i][argsAliaName] = [];
+        if(dataPool[resultIndex][argsAliaName] == undefined){
+          dataPool[resultIndex][argsAliaName] = [];
         }
         if(util.isArray(dataResult.data[argName])){
           for(let j=0;j<dataResult.data[argName].length;j++){
             let element2 = dataResult.data[argName][j];
-            dataPool[i][argsAliaName].push(element2);
+            dataPool[resultIndex][argsAliaName].push(element2);
           }
         }else{
           const pushData = dataResult.data[argName];
-          dataPool[i][argsAliaName].push(pushData);
+          dataPool[resultIndex][argsAliaName].push(pushData);
         }
       }else{
-        dataPool[i][element] = dataResult.data[element];
+        dataPool[resultIndex][element] = dataResult.data[element];
       }
     }
   }
@@ -335,10 +334,10 @@ async function handelResult(args){
       case 'Empty':
         if(subMession != undefined
           && subMessionIndex == subMessionLength-1
-          && common.isEmptyArray(dataPool[i][conditionArg])){
-          console.log('jumpCondition dataPool>>>', dataPool[i])
+          && common.isEmptyArray(dataPool[resultIndex][conditionArg])){
+          console.log('jumpCondition dataPool>>>', dataPool[resultIndex])
           jumpValue = step + parseInt(jumpLocation);
-        }else if(common.isEmptyObj(dataPool[i][conditionArg])){
+        }else if(common.isEmptyObj(dataPool[resultIndex][conditionArg])){
           jumpValue = step + parseInt(jumpLocation);
         }
         break;
@@ -354,7 +353,7 @@ async function handelResult(args){
   if(nextStep>=conf.queueConfig[taskName].length){
     await deleteTask({
       redisConn: redisConn,
-      md5Value: dataPool[i].md5Value
+      md5Value: dataPool[resultIndex].md5Value
     });
     triggerEvent(successEventName);
     return;
@@ -363,22 +362,22 @@ async function handelResult(args){
   if(subMession === undefined){
     console.log('nextStep:', nextStep);
     console.log('taskName:', taskName);
-    console.log(JSON.stringify(dataPool[i]));
-    pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[i]));
+    console.log(JSON.stringify(dataPool[resultIndex]));
+    pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
   }else{
     const subMessionProcessName = `${subMession}Process`;
-    if(dataPool[i][subMessionProcessName]===undefined){
-      dataPool[i][subMessionProcessName] = 0;
+    if(dataPool[resultIndex][subMessionProcessName]===undefined){
+      dataPool[resultIndex][subMessionProcessName] = 0;
     }
-    dataPool[i][subMessionProcessName]++;
+    dataPool[resultIndex][subMessionProcessName]++;
     if(subMessionIndex == subMessionLength-1){
-      if(dataPool[i][subMessionProcessName] >= dataPool[i][subMession].length){
+      if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
         console.log('nextStep:', nextStep);
         console.log('taskName:', taskName);
-        console.log(JSON.stringify(dataPool[i]));
-        pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[i]));
+        console.log(JSON.stringify(dataPool[resultIndex]));
+        pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
       }else{
-        pushResult2 = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[i]));
+        pushResult2 = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[resultIndex]));
       }
     }
   }
@@ -387,7 +386,7 @@ async function handelResult(args){
     logger.loggerError.info(`${currentQueueName} Step${step} Err2>>`, pushResult2.error.stack);
     await deleteTask({
       redisConn: redisConn,
-      md5Value: dataPool[i].md5Value
+      md5Value: dataPool[resultIndex].md5Value
     });
     triggerEvent(errorEvnentName);
   }
@@ -434,6 +433,7 @@ async function sendTask(args){
         drawDataArgs.push(objData[drawData[j]]);
       }
       ActionValue[funcName]--;
+      console.log('drawDataArgs>>>', drawDataArgs);
       promiseList.push(taskFunctin(...drawDataArgs));
     }else{
       const subPromiseList = [];

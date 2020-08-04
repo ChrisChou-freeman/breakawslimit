@@ -3,7 +3,7 @@ const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 
 const conf = require('../conf.js');
-const test_createCert = require('./test_createCert');
+const testCreateCert = require('./test_createCert');
 const testUpdateCert = require('./test_updateCert');
 
 const packageDefinition = protoLoader.loadSync(
@@ -21,8 +21,10 @@ function main() {
     'localhost:50055',
     grpc.credentials.createInsecure()
   );
-  // test_createCert(client);
-  testUpdateCert(client);
+  testCreateCert(client);
+  testCreateCert(client, 'test_policy_chris2');
+  testCreateCert(client, 'test_policy_chris3');
+  // testUpdateCert(client);
 }
 
 main();
