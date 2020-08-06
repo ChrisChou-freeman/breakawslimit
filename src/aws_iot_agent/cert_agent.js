@@ -38,18 +38,18 @@ class CertAgent{
     });
   }
 
-  async updateCertificate(certID, newStatus){
+  async updateCertificate(certArn, newStatus='INACTIVE'){
     return new Promise((resolve)=>{
       const returnData = {error: null, data: null};
-      if(common.isEmptyString(certID)
-        ||common.isEmptyString(newStatus)){
+      if(common.isEmptyString(certArn)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
+      const certID =  certArn.split(':')[5].split('/')[1]
       const params = {
         certificateId: certID,
-        newStatus: newStatus
+        newStatus: newStatus,
       }
       iot.updateCertificate(params, (err, data)=>{
         if(err){
@@ -65,14 +65,15 @@ class CertAgent{
     });
   }
 
-  async deleteCertificate(certID){
+  async deleteCertificate(certArn){
     return new Promise((resolve)=>{
-      const returnData = {error: null, data: null};
-      if(common.isEmptyString(certID)){
+      if(common.isEmptyString(certArn)){
         returnData.error = new Error('ErrRequest');
         resolve(returnData);
         return;
       }
+      const certID =  certArn.split(':')[5].split('/')[1]
+      const returnData = {error: null, data: null};
       const params = {
         certificateId: certID
       };

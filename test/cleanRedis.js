@@ -8,12 +8,12 @@ async function cleanReids(){
     const value = conf.queueConfig[key];
     if(typeof value == 'string'){
       const delResutl = await redisCli.del(value);
-      console.log(delResutl);
+      console.log(`${value}>>`, delResutl);
     }else{
       for(let i=0;i<value.length;i++){
         const obj = value[i];
         const delResult = await redisCli.del(obj.name);
-        console.log(delResult);
+        console.log(`${obj.name}>>`, delResult);
       }
     }
   }

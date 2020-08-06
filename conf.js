@@ -123,12 +123,25 @@ exports.queueConfig= {
     },
     {
       name: 'rc_detachPolicy',
+      drawData: ['subMession:object:target:policyName'],
+      putArgs: [],
+      subMession: 'attachedPolicies'
     },
     {
       name: 'rc_deletePolicy',
+      drawData: ['subMession:object:policyName'],
+      putArgs: [],
+      subMession: 'attachedPolicies'
+    },
+    {
+      name: 'rc_updateCertificate',
+      drawData: ['certificateArn'],
+      putArgs: [],
     },
     {
       name: 'rc_deleteCertificate',
+      drawData: ['certificateArn'],
+      putArgs: []
     },
   ]
 };

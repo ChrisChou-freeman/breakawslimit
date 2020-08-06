@@ -254,7 +254,8 @@ async function revokeCert(req, callback){
   const responseData = {status: false, info: ''};
   const requestData = JSON.parse(req.request.data);
   console.log('start revokeCert>>>');
-  if(common.isEmptyString(requestData.certificateArn)){
+  if(common.isEmptyString(requestData.certificateArn)
+    || common.isEmptyString(requestData.thingName)){
     responseData.info = 'ErrRequest';
     callback(null, {response: JSON.stringify(responseData)});
     return;
@@ -286,7 +287,7 @@ async function revokeCert(req, callback){
   requestData.md5Value = md5Value;
   const jsonData = JSON.stringify(requestData);
   const resultList = await Promise.all([
-    redisConn.lpush(conf.queueConfig.CreateCertificateQueue[0].name, jsonData),
+    redisConn.lpush(conf.queueConfig.RevokeCertificateQueue[0].name, jsonData),
     redisConn.sadd(conf.queueConfig.redisMainTaskSet, md5Value)
   ]);
   const pushResult = resultList[0];
@@ -336,6 +337,7 @@ async function handelResult(args){
         md5Value: dataPool[resultIndex].md5Value
       });
       triggerEvent(errorEvnentName);
+      return;
     }
     dataPool[resultIndex].errTime++;
     const pushResult = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[resultIndex]));
@@ -396,7 +398,6 @@ async function handelResult(args){
     }
   }
 
-  let pushResult2;
   let nextStep = step + 1;
   if(jumpValue != null){
     nextStep = jumpValue;
@@ -411,6 +412,7 @@ async function handelResult(args){
     return;
   }
 
+  let pushResult2;
   if(subMession === undefined){
     console.log('nextStep:', nextStep);
     console.log('taskName:', taskName);
@@ -441,6 +443,7 @@ async function handelResult(args){
       md5Value: dataPool[resultIndex].md5Value
     });
     triggerEvent(errorEvnentName);
+    return;
   }
 }
 
