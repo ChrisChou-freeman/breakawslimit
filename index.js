@@ -15,16 +15,21 @@ const packageDefinition = protoLoader.loadSync(
 );
 const limit_server_buffer = grpc.loadPackageDefinition(packageDefinition).myserver;
 
-function main() {
-  const server = new grpc.Server();
-  server.addService(
-    limit_server_buffer.Greeter.service,
+function createServer(){
+  const server = new grpc.server();
+  server.addservice(
+    limit_server_buffer.greeter.service,
     {
-      createCert: limitBufferService.createCert,
-      updateCert: limitBufferService.updateCert,
-      revokeCert: limitBufferService.revokeCert
+      createcert: limitBufferService.createcert,
+      updatecert: limitBufferService.updatecert,
+      revokecert: limitBufferService.revokecert
     }
   );
+  return server;
+}
+
+function main() {
+  const server = createServer()
   server.bind('0.0.0.0:50055', grpc.ServerCredentials.createInsecure());
   server.start();
   limitBufferService.startTask();

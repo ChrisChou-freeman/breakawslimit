@@ -26,8 +26,8 @@ function main() {
   // testCreateCert(client, 'test_policy_chris2', 10);
   // testCreateCert(client, 'test_policy_chris3');
   // testUpdateCert(client);
-  testRevokeCert(client, 'arn:aws:iot:us-west-2:222294582284:cert/41fc3eb2cb34713b7ea6affb7a17a4a4b866af0f022b81bdc838300b8f5cba1d');
-  testRevokeCert(client, 'arn:aws:iot:us-west-2:222294582284:cert/20d844144091aa32030ddae9f31f217e45f63468b30de2bed7662f28822564e8');
+  // testRevokeCert(client, 'arn:aws:iot:us-west-2:222294582284:cert/41fc3eb2cb34713b7ea6affb7a17a4a4b866af0f022b81bdc838300b8f5cba1d');
+  // testRevokeCert(client, 'arn:aws:iot:us-west-2:222294582284:cert/20d844144091aa32030ddae9f31f217e45f63468b30de2bed7662f28822564e8');
 }
 
 main();
