@@ -10,7 +10,6 @@ const awsIotAgent = require('./aws_iot_agent');
 const common = require('../lib/common.js');
 
 const ServerFeedbackEvent = new Events();
-const ERROR_TIME_LIMIT = 10;
 
 let ActionValue = {
   attachPolicy:               awsIotAgent.limit.AttachPolicy,
@@ -331,7 +330,7 @@ async function handelResult(args){
     if(dataPool[resultIndex].errTime === undefined){
       dataPool[resultIndex].errTime = 0;
     }
-    if(dataPool[resultIndex].errTime >= ERROR_TIME_LIMIT){
+    if(dataPool[resultIndex].errTime >= conf.TASK_ERROR_TIME_LIMIT){
       await deleteTask({
         redisConn: redisConn,
         md5Value: dataPool[resultIndex].md5Value

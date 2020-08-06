@@ -4,6 +4,7 @@ const logRoot = __dirname;
 exports.infoLogPath = logRoot + '/log/info.log';
 exports.errLogPath = logRoot + '/log/err.log';
 exports.protosPath = __dirname + '/protos/limit_server_buffer.proto';
+exports.TASK_ERROR_TIME_LIMIT = 10;
 
 exports.redis= {
   redisHost: '127.0.0.1',
