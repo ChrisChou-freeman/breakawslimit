@@ -256,12 +256,13 @@ function revokeCert(req, callback){
 }
 
 async function handelResult(args){
+  let step = args.step;
+  let jumpValue = null;
   const taskName = args.taskName;
   const currentQueueName = args.currentQueueName;
   const dataResult = args.dataResult;
   const dataPool = args.dataPool;
   const redisConn = args.redisConn;
-  let step = args.step;
   const resultIndex = args.resultIndex;
   const errorEvnentName  = args.dataPool[resultIndex].md5Value + '_Error';
   const successEventName = args.dataPool[resultIndex].md5Value + '_Success';
@@ -270,7 +271,6 @@ async function handelResult(args){
   const subMessionIndex = args.subMessionIndex;
   const subMessionLength = args.subMessionLength;
   const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
-  let jumpValue = null;
 
   console.log(`step:${step} dataResult>>>`, dataResult);
 

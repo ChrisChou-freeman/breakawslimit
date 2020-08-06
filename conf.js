@@ -109,11 +109,21 @@ exports.queueConfig= {
     },
   ],
 
-  // RevokeCertificateQueue:     {
-  //   1: 'rc_detachThingPrincipal',
-  //   2: 'rc_listTargetsForPolicy',
-  //   3: 'rc_detachPolicy',
-  //   4: 'rc_deletePolicy',
-  //   5: 'rc_deleteCertificate',
-  // }
+  RevokeCertificateQueue:     [
+    {
+      name: 'rc_detachThingPrincipal',
+    },
+    {
+      name: 'rc_listAttachedPolicies',
+    },
+    {
+      name: 'rc_detachPolicy',
+    },
+    {
+      name: 'rc_deletePolicy',
+    },
+    {
+      name: 'rc_deleteCertificate'
+    },
+  ]
 };
