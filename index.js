@@ -30,4 +30,6 @@ function main() {
   limitBufferService.startTask();
 }
 
-main();
+if(require.main.filename == __filename){
+  main();
+}

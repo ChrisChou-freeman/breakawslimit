@@ -246,13 +246,65 @@ async function updateCert(req, callback){
 /**
   * recieve data form
   {
-    certificateARN: "xxx",
+    certificateArn: "xxx",
+    thingName: "xxx"
   }
 */
-function revokeCert(req, callback){
-  const data = JSON.parse(req.request.data);
-  console.log(data);
-  callback(null, {response: req.request.data});
+async function revokeCert(req, callback){
+  const responseData = {status: false, info: ''};
+  const requestData = JSON.parse(req.request.data);
+  console.log('start revokeCert>>>');
+  if(common.isEmptyString(requestData.certificateArn)){
+    responseData.info = 'ErrRequest';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  const redisConn = new redisCli();
+  const connectResult = await redisConn.connect();
+  if(connectResult.error){
+    logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    responseData.info = '503';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  const md5Value = tools.genMd5(req.request.data);
+  const hasMember = await checkHasMember({
+    redisConn: redisConn,
+    md5Value: md5Value
+  });
+
+  if(hasMember.error){
+    responseData.info = hasMember.error.message;
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  if(hasMember.data){
+    responseData.info = 'repeatRequestErr';
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  requestData.md5Value = md5Value;
+  const jsonData = JSON.stringify(requestData);
+  const resultList = await Promise.all([
+    redisConn.lpush(conf.queueConfig.CreateCertificateQueue[0].name, jsonData),
+    redisConn.sadd(conf.queueConfig.redisMainTaskSet, md5Value)
+  ]);
+  const pushResult = resultList[0];
+  const addResult = resultList[1];
+  if(pushResult.error){
+    responseData.info = '503';
+    logger.loggerError.info('RevokeCertificateQueueLpushErr>>', pushResult.error.stack);
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+  if(addResult.error){
+    responseData.info = '503';
+    logger.loggerError.info('RevokeCertificateQueueSaddErr>>', addResult.error.stack);
+    callback(null, {response: JSON.stringify(responseData)});
+    return;
+  }
+
+  registerEvent(md5Value, callback);
 }
 
 async function handelResult(args){

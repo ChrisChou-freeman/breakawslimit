@@ -12,7 +12,7 @@ project break aws limit
 微服务演示代码:
 ---------------
 
-  [公司gitlab](http://gitlab.sugrsugr.com/ChrisChou/grpcmicserverexample)
+  [gitlab](http://gitlab.sugrsugr.com/ChrisChou/grpcmicserverexample)
 
 设计图:
 --------------

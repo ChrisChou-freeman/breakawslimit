@@ -80,8 +80,14 @@ class PolicyAgent{
       };
       iot.deletePolicy(params, function(err, data) {
         if (err){
-          returnData.error = new Error('deletePolicy');
+          if(err.code == 'ResourceNotFoundException'){
+            resolve.data = data;
+            resolve(returnData);
+            return;
+          }
+          returnData.error = new Error('deletePolicyErr');
           logger.loggerError.info({info: err.stack, source: 'deletePolicy'});
+          resolve(returnData);
           return;
         }
         returnData.data = data;

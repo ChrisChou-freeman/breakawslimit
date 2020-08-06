@@ -29,7 +29,7 @@ exports.queueConfig= {
       drawData: ['addtion:index:policyName'],
       putArgs: ['subMession:targets:targets'],
       subMession: 'policies',
-      jumpCondition: 'targets:Empty:3',
+      jumpCondition: 'targets:Empty:2',
     },
     {
       name: 'cc_detachPolicy',
@@ -81,7 +81,7 @@ exports.queueConfig= {
       drawData: ['addtion:index:policyName'],
       putArgs: ['subMession:targets:targets'],
       subMession: 'policies',
-      jumpCondition: 'targets:Empty:3',
+      jumpCondition: 'targets:Empty:2',
     },
     {
       name: 'uc_detachPolicy',
@@ -112,9 +112,14 @@ exports.queueConfig= {
   RevokeCertificateQueue:     [
     {
       name: 'rc_detachThingPrincipal',
+      drawData: ['certificateArn', 'thingName'],
+      putArgs: [],
     },
     {
       name: 'rc_listAttachedPolicies',
+      drawData: ['certificateArn'],
+      putArgs: ['attachedPolicies'],
+      jumpCondition: 'attachedPolicies:Empty:3'
     },
     {
       name: 'rc_detachPolicy',
@@ -123,7 +128,7 @@ exports.queueConfig= {
       name: 'rc_deletePolicy',
     },
     {
-      name: 'rc_deleteCertificate'
+      name: 'rc_deleteCertificate',
     },
   ]
 };
