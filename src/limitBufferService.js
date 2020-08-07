@@ -30,9 +30,8 @@ let ActionValue = {
 const taskStepStatus = {};
 
 async function checkHasMember(args){
+  const {redisConn, md5Value} = args;
   const returnData = {error: null, data: false};
-  const redisConn = args.redisConn;
-  const md5Value = args.md5Value;
   const isMember = await redisConn.sismember(conf.queueConfig.redisMainTaskSet, md5Value);
   if(isMember.error){
     returnData.error = new Error('503');
@@ -52,13 +51,11 @@ function registerEvent(eventValue, callback){
     callback(null, {response: JSON.stringify(responseData)});
     return;
   });
-
   ServerFeedbackEvent.addListener(taskErrEvent, function(){
     const responseData = {status: false, info: '503'};
     callback(null, {response: JSON.stringify(responseData)});
     return;
   });
-
 }
 
 function triggerEvent(eventName){
@@ -68,8 +65,7 @@ function triggerEvent(eventName){
 
 async function deleteTask(args){
   const returnData = {error: null, data: null};
-  const md5Value = args.md5Value;
-  const redisConn = args.redisConn;
+  const {md5Value, redisConn} = args;
   const queName = conf.queueConfig.redisMainTaskSet;
   const remResult = await redisConn.srem(queName, md5Value);
   if(remResult.error){
@@ -82,15 +78,14 @@ async function deleteTask(args){
 
 async function popQueueItem(args) {
   const returnData = {error: null, data: null};
-  const queName = args.queName;
-  const reconn = args.redisConn;
-  const connectResult = await reconn.connect();
+  const {queName, redisConn} = args;
+  const connectResult = await redisConn.connect();
   if(connectResult.error){
     returnData.error = connectResult.error;
     return returnData;
   }
 
-  const result = await reconn.rpop(queName);
+  const result = await redisConn.rpop(queName);
   if(result.error){
     returnData.error = result.error;
     return returnData;
@@ -310,18 +305,20 @@ async function revokeCert(req, callback){
 async function handelResult(args){
   let step = args.step;
   let jumpValue = null;
-  const taskName = args.taskName;
-  const currentQueueName = args.currentQueueName;
-  const dataResult = args.dataResult;
-  const dataPool = args.dataPool;
-  const redisConn = args.redisConn;
-  const resultIndex = args.resultIndex;
-  const errorEvnentName  = args.dataPool[resultIndex].md5Value + '_Error';
-  const successEventName = args.dataPool[resultIndex].md5Value + '_Success';
-  const putArgs = args.putArgs;
+  const {
+    taskName,
+    currentQueueName,
+    dataResult,
+    dataPool,
+    redisConn,
+    resultIndex,
+    putArgs,
+    subMessionIndex,
+    subMessionLength,
+  } = args;
+  const errorEvnentName  = dataPool[resultIndex].md5Value + '_Error';
+  const successEventName = dataPool[resultIndex].md5Value + '_Success';
   const subMession = conf.queueConfig[taskName][step]['subMession'];
-  const subMessionIndex = args.subMessionIndex;
-  const subMessionLength = args.subMessionLength;
   const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
 
   console.log(`step:${step} dataResult>>>`, dataResult);
@@ -447,12 +444,14 @@ async function handelResult(args){
 }
 
 async function sendTask(args){
-  const step = args.step;
-  const redisConn = args.redisConn;
-  const certObj = args.certObj;
-  const policyObj = args.policyObj;
-  const thingObj = args.thingObj;
-  const taskName = args.taskName;
+  const {
+    step,
+    redisConn,
+    certObj,
+    policyObj,
+    thingObj,
+    taskName,
+  } = args;
   const currentQueueName = conf.queueConfig[taskName][step].name;
   const funcName= currentQueueName.split('_')[1];
   const taskNumber = await redisConn.llen(currentQueueName);
@@ -595,6 +594,12 @@ function resetAvtionValue(){
 }
 
 function runConfigTask(args){
+  const {
+    redisConn,
+    certObj,
+    policyObj,
+    thingObj,
+  } = args;
   for(let taskName in conf.queueConfig){
     if(typeof conf.queueConfig[taskName] == 'string'){
       continue;
@@ -610,11 +615,11 @@ function runConfigTask(args){
       if(taskStepStatus[taskName][step] === false){
         try{
           sendTask({
+            redisConn,
+            certObj,
+            policyObj,
+            thingObj,
             step: step,
-            redisConn: args.redisConn,
-            certObj: args.certObj,
-            policyObj: args.policyObj,
-            thingObj: args.thingObj,
             taskName: taskName
           });
         }catch(error){
