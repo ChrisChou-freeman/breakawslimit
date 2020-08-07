@@ -66,6 +66,26 @@ class ThingAgent{
       });
     });
   }
+
+  async listThingPrincipals(thingName){
+    return new Promise((resolve)=>{
+      const returnData = {error: null, data: null};
+      const params = {
+        thingName: thingName
+      };
+      iot.listThingPrincipals(params, (err, data)=>{
+        if(err){
+          returnData.error = err;
+          resolve(returnData);
+          return;
+        }
+        returnData.data = data;
+        resolve(returnData);
+        return;
+      });
+    });
+  }
+
 }
 
 module.exports = ThingAgent;

@@ -65,6 +65,7 @@ class PolicyAgent{
           return;
         }
         returnData.data = data;
+        returnData.data['detachedPolicy'] = policyName;
         resolve(returnData);
         return;
       });

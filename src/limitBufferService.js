@@ -353,7 +353,7 @@ async function handelResult(args){
     for(let i=0;i<putArgs.length;i++){
       const element = putArgs[i];
       if(element.startsWith('subMession:')){
-        let argName = element.split(':')[1];
+        const argName = element.split(':')[1];
         const argsAliaName = element.split(':')[2];
         console.log('dataResult__data>>>', dataResult.data);
         console.log('argName>>>', argName);
@@ -419,12 +419,13 @@ async function handelResult(args){
     if(dataPool[resultIndex][subMessionProcessName]===undefined){
       dataPool[resultIndex][subMessionProcessName] = 0;
     }
-    dataPool[resultIndex][subMessionProcessName]++;
+    dataPool[resultIndex][subMessionProcessName] += 1;
     if(subMessionIndex == subMessionLength-1){
       if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
         console.log('nextStep:', nextStep);
         console.log('taskName:', taskName);
         console.log(JSON.stringify(dataPool[resultIndex]));
+        dataPool[resultIndex][subMessionProcessName] = 0;
         pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
       }else{
         pushResult2 = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[resultIndex]));
@@ -492,6 +493,12 @@ async function sendTask(args){
       const subPromiseList = [];
       const drawData = conf.queueConfig[taskName][step]['drawData'];
       for(let j=0;j<objData[subMession].length;j++){
+        const subMessionProcessName = `${subMession}Process`;
+        if(objData[subMessionProcessName] != undefined
+          && j < objData[subMessionProcessName] ){
+          console.log('continue>>',j);
+          continue;
+        }
         if(ActionValue[funcName]<= 0){
           break;
         }
@@ -548,9 +555,9 @@ async function sendTask(args){
       });
     }
   }else if(promiseListSubs.length>0){
-    console.log('promiseListSubs>>>', promiseListSubs);
+    // console.log('promiseListSubs>>>', promiseListSubs);
     promiseListSubs = promiseListSubs.map((a)=>{return Promise.all(a);});
-    console.log('promiseListSubs2>>>', promiseListSubs)
+    // console.log('promiseListSubs2>>>', promiseListSubs)
     const promiseListSubsResult = await Promise.all(promiseListSubs);
     for(let i=0;i<promiseListSubsResult.length;i++){
       const subResultElement = promiseListSubsResult[i];
@@ -645,10 +652,12 @@ function startTask(){
         policyObj: policyObj,
         thingObj: thingObj
       });
-      resetAvtionValue();
-    }, 1000);
+    }, 10);
+
+    setInterval(resetAvtionValue, 1000);
   }
 }
+
 
 module.exports = {
   createCert,
