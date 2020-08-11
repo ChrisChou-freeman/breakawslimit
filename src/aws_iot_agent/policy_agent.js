@@ -91,6 +91,7 @@ class PolicyAgent{
             return;
           }
           returnData.error = new Error('deletePolicyErr');
+          console.log(err);
           logger.loggerError.info({info: err.stack, source: 'deletePolicy'});
           resolve(returnData);
           return;

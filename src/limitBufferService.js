@@ -322,7 +322,7 @@ async function handelResult(args){
   const subMession = conf.queueConfig[taskName][step]['subMession'];
   const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
 
-  console.log(`step:${step} dataResult>>>`, dataResult);
+  console.log(`step:${step} dataResult>>>`, dataResult.error);
 
   if(dataResult.error){
     if(dataPool[resultIndex].errTime === undefined){
@@ -386,11 +386,12 @@ async function handelResult(args){
         if(subMession != undefined
           && subMessionIndex == subMessionLength-1
           && common.isEmptyArray(dataPool[resultIndex][conditionArg])){
-          console.log('jumpCondition dataPool>>>', dataPool[resultIndex]);
+          console.log('need jumpCondition ');
           jumpValue = step + parseInt(jumpLocation);
         }else if(common.isEmptyObj(dataPool[resultIndex][conditionArg])
           || common.isEmptyArray(dataPool[resultIndex][conditionArg])){
           jumpValue = step + parseInt(jumpLocation);
+          console.log('need jumpCondition ');
         }
         break;
     }
@@ -414,7 +415,7 @@ async function handelResult(args){
   if(subMession === undefined){
     console.log('nextStep:', nextStep);
     console.log('taskName:', taskName);
-    // console.log(JSON.stringify(dataPool[resultIndex]));
+    console.log('dataPool:', JSON.stringify(dataPool[resultIndex]));
     pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
   }else{
     const subMessionProcessName = `${subMession}Process`;
@@ -426,7 +427,7 @@ async function handelResult(args){
       if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
         console.log('nextStep:', nextStep);
         console.log('taskName:', taskName);
-        // console.log(JSON.stringify(dataPool[resultIndex]));
+        console.log('dataPool:', JSON.stringify(dataPool[resultIndex]));
         dataPool[resultIndex][subMessionProcessName] = 0;
         pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
       }else{
@@ -471,25 +472,31 @@ async function sendTask(args){
   }
 
   for(let i=0;i<taskNumber.data;i++){
-    if(ActionValue[funcName]<= 0){
-      break;
-    }
 
     const jsonData = await popQueueItem({
       queName: currentQueueName,
       redisConn: redisConn
     });
+    if(jsonData.data == null){
+      continue;
+    }
     const objData = JSON.parse(jsonData.data);
+    console.log(`taskName:${taskName} step${step} md5Value:${objData['md5Value']}`);
+
     dataPool.push(objData);
 
     if(subMession === undefined){
+      ActionValue[funcName]--;
+      if(ActionValue[funcName]<= 0){
+        // put back
+        await redisConn.lpush(currentQueueName, jsonData.data);
+        break;
+      }
       const drawData = conf.queueConfig[taskName][step]['drawData'];
       const drawDataArgs = [];
       for(let j=0;j<drawData.length;j++){
         drawDataArgs.push(objData[drawData[j]]);
       }
-      ActionValue[funcName]--;
-      console.log('drawDataArgs>>>', drawDataArgs);
       promiseList.push(taskFunctin(...drawDataArgs));
     }else{
       const subPromiseList = [];
@@ -498,10 +505,16 @@ async function sendTask(args){
         const subMessionProcessName = `${subMession}Process`;
         if(objData[subMessionProcessName] != undefined
           && j < objData[subMessionProcessName] ){
-          console.log('continue>>',j);
+          console.log('continue>>>', j,' ',jsonData.data);
           continue;
         }
+        ActionValue[funcName]--;
         if(ActionValue[funcName]<= 0){
+          if(j==0
+            || j == objData[subMessionProcessName]){
+            // put back
+            await redisConn.lpush(currentQueueName, jsonData.data);
+          }
           break;
         }
         const drawDataArgs = [];
@@ -532,7 +545,6 @@ async function sendTask(args){
             drawDataArgs.push(objData[element]);
           }
         }
-        ActionValue[funcName]--;
         subPromiseList.push(taskFunctin(...drawDataArgs));
       }
       promiseListSubs.push(subPromiseList);

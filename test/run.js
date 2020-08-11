@@ -45,31 +45,37 @@ async function testUpdateCert(args){
 }
 
 async function main(){
-  // const resultList = await Promise.all([
-  //   testCreateCert('test_chris_policy1'),
-  //   testCreateCert('test_chris_policy2'),
-  // ]);
-  // console.log(resultList);
+  const requestNumer = 10;
+  const promiseList1 = [];
+  for(let i=0;i<requestNumer;i++){
+    const policyName = 'test_chris_policy' + i;
+    promiseList1.push(
+      testCreateCert(policyName)
+    );
+  }
+  const resultList1 = await Promise.all(promiseList1);
+  console.log(resultList1)
+
   const thingObj = new awsIotAgent.ThingAgent();
   const attachedCerts = await thingObj.listThingPrincipals('test_thing_chris');
   const certlist = attachedCerts.data.principals;
   if(certlist == []){
     return;
   }
-  // const promiseList2 = [];
-  // for(let i=0;i<certlist.length;i++){
-  //   const policyName = 'test_chris_update_policy' + i;
-  //   const cert = certlist[i];
-  //   promiseList2.push(
-  //     testUpdateCert({
-  //       policyName,
-  //       certificateArn: cert
-  //     })
-  //   );
-  // }
 
-  // const resultList2 = await Promise.all(promiseList2);
-  // console.log(resultList2);
+  const promiseList2 = [];
+  for(let i=0;i<certlist.length;i++){
+    const policyName = 'test_update_policy' + i;
+    const cert = certlist[i];
+    promiseList2.push(
+      testUpdateCert({
+        policyName,
+        certificateArn: cert
+      })
+    );
+  }
+  const resultList2 = await Promise.all(promiseList2);
+  console.log(resultList2);
 
   const promiseList3 = [];
   for(let i=0;i<certlist.length;i++){
