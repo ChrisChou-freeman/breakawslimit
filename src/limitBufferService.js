@@ -472,7 +472,6 @@ async function sendTask(args){
   }
 
   for(let i=0;i<taskNumber.data;i++){
-
     const jsonData = await popQueueItem({
       queName: currentQueueName,
       redisConn: redisConn
@@ -481,7 +480,6 @@ async function sendTask(args){
       continue;
     }
     const objData = JSON.parse(jsonData.data);
-    console.log(`taskName:${taskName} step${step} md5Value:${objData['md5Value']}`);
 
     dataPool.push(objData);
 

@@ -12,7 +12,7 @@ const packageDefinition = protoLoader.loadSync(
    oneofs: true}
 );
 const proto = grpc.loadPackageDefinition(packageDefinition).myserver;
-const serverHost = 'localhost:50055';
+const serverHost = `${conf.serverHost}:${conf.serverPort}`;
 
 class CertManagerClient{
   constructor(){
