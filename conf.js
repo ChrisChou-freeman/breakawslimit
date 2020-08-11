@@ -5,6 +5,8 @@ exports.infoLogPath = logRoot + '/log/info.log';
 exports.errLogPath = logRoot + '/log/err.log';
 exports.protosPath = __dirname + '/protos/limit_server_buffer.proto';
 exports.TASK_ERROR_TIME_LIMIT = 10;
+exports.serverHost = 'localhost';
+exports.serverPort = '50055';
 
 exports.redis= {
   redisHost: '127.0.0.1',
@@ -85,13 +87,13 @@ exports.queueConfig= {
       jumpCondition: 'targets:Empty:2',
     },
     {
-      name: 'uc_detachPolicy',
+      name: '2uc_detachPolicy',
       drawData: ['subMession:object:target:policyName'],
       putArgs: [],
       subMession: 'targets',
     },
     {
-      name: 'uc_deletePolicy',
+      name: '2uc_deletePolicy',
       drawData: ['addtion:index:policyName'],
       putArgs: [],
       subMession: 'policies',

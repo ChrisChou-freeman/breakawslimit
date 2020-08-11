@@ -30,7 +30,8 @@ function createServer(){
 
 function main() {
   const server = createServer()
-  server.bind('0.0.0.0:50055', grpc.ServerCredentials.createInsecure());
+  server.bind(`${conf.serverHost}:${conf.serverPort}`, grpc.ServerCredentials.createInsecure());
+  console.log(`server start at:${conf.serverHost}:${conf.serverPort}`)
   server.start();
   limitBufferService.startTask();
 }
