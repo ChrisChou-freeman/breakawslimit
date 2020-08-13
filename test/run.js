@@ -9,7 +9,7 @@ const thingName = 'test_thing_chris';
 
 async function testCreateCert(policyName){
   const clientObj = new clientManage();
-  const deviceCert = await tools.genDeviceCert();
+  const deviceCert = tools.genDeviceCert();
   const policies = tools.genPolicy(6);
   const requestData = {
     thingName,
@@ -45,10 +45,10 @@ async function testUpdateCert(args){
 }
 
 async function main(){
-  const requestNumer = 10;
+  const requestNumer = 80;
   const promiseList1 = [];
   for(let i=0;i<requestNumer;i++){
-    const policyName = 'test_chris_policy' + i;
+    const policyName = `test_chris_policy${i}`;
     promiseList1.push(
       testCreateCert(policyName)
     );

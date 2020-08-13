@@ -356,8 +356,6 @@ async function handelResult(args){
       if(element.startsWith('subMession:')){
         const argName = element.split(':')[1];
         const argsAliaName = element.split(':')[2];
-        // console.log('dataResult__data>>>', dataResult.data);
-        // console.log('argName>>>', argName);
         if(dataPool[resultIndex][argsAliaName] == undefined){
           dataPool[resultIndex][argsAliaName] = [];
         }
@@ -402,13 +400,33 @@ async function handelResult(args){
     nextStep = jumpValue;
   }
 
+  let subMessionProcessName;
+  if(subMession){
+    subMessionProcessName = `${subMession}Process`;
+    if(dataPool[resultIndex][subMessionProcessName]===undefined){
+      dataPool[resultIndex][subMessionProcessName] = 0;
+    }
+    dataPool[resultIndex][subMessionProcessName] += 1;
+  }
+
   if(nextStep>=conf.queueConfig[taskName].length){
-    await deleteTask({
-      redisConn: redisConn,
-      md5Value: dataPool[resultIndex].md5Value
-    });
-    triggerEvent(successEventName);
-    return;
+    if(subMession){
+      if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
+        await deleteTask({
+          redisConn: redisConn,
+          md5Value: dataPool[resultIndex].md5Value
+        });
+        triggerEvent(successEventName);
+        return;
+      }
+    }else{
+      await deleteTask({
+        redisConn: redisConn,
+        md5Value: dataPool[resultIndex].md5Value
+      });
+      triggerEvent(successEventName);
+      return;
+    }
   }
 
   let pushResult2;
@@ -418,11 +436,6 @@ async function handelResult(args){
     console.log('dataPool:', JSON.stringify(dataPool[resultIndex]));
     pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
   }else{
-    const subMessionProcessName = `${subMession}Process`;
-    if(dataPool[resultIndex][subMessionProcessName]===undefined){
-      dataPool[resultIndex][subMessionProcessName] = 0;
-    }
-    dataPool[resultIndex][subMessionProcessName] += 1;
     if(subMessionIndex == subMessionLength-1){
       if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
         console.log('nextStep:', nextStep);
@@ -485,7 +498,7 @@ async function sendTask(args){
 
     if(subMession === undefined){
       ActionValue[funcName]--;
-      if(ActionValue[funcName]<= 0){
+      if(ActionValue[funcName] < 0){
         // put back
         await redisConn.lpush(currentQueueName, jsonData.data);
         break;
@@ -503,13 +516,12 @@ async function sendTask(args){
         const subMessionProcessName = `${subMession}Process`;
         if(objData[subMessionProcessName] != undefined
           && j < objData[subMessionProcessName] ){
-          console.log('continue>>>', j,' ',jsonData.data);
           continue;
         }
         ActionValue[funcName]--;
-        if(ActionValue[funcName]<= 0){
+        if(ActionValue[funcName] < 0){
           if(j==0
-            || j == objData[subMessionProcessName]){
+            || j==objData[subMessionProcessName]){
             // put back
             await redisConn.lpush(currentQueueName, jsonData.data);
           }
