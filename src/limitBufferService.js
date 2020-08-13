@@ -6,7 +6,7 @@ const conf = require('../conf.js');
 const logger = require('../lib/logger.js');
 const redisCli = require('../lib/redis.js');
 const tools = require('../lib/tools.js');
-const awsIotAgent = require('./aws_iot_agent');
+const awsIotAgent = require('../lib/aws_iot_agent');
 const common = require('../lib/common.js');
 
 const ServerFeedbackEvent = new Events();
@@ -516,6 +516,7 @@ async function sendTask(args){
         const subMessionProcessName = `${subMession}Process`;
         if(objData[subMessionProcessName] != undefined
           && j < objData[subMessionProcessName] ){
+          // continue subMission process
           continue;
         }
         ActionValue[funcName]--;
