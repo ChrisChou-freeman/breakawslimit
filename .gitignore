@@ -2,4 +2,5 @@ test/temp/
 node_modules/
 prepare_text.txt
 .tern-project
+log/*
 src/aws_iot_agent/config_local.json

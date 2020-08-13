@@ -13,6 +13,10 @@ exports.redis= {
   redisPort: '6379',
 };
 
+if(!exports.debug){
+  exports.redis.redisPort = '9003';
+}
+
 exports.queueConfig= {
   redisMainTaskSet: 'redisMainTaskSet',
 

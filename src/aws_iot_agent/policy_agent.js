@@ -91,13 +91,10 @@ class PolicyAgent{
             return;
           }
           returnData.error = new Error('deletePolicyErr');
-          console.log(err);
           logger.loggerError.info({info: err.stack, source: 'deletePolicy'});
           resolve(returnData);
           return;
         }
-        console.log('deleted>>>>', policyName);
-        console.log('delete result>>', JSON.stringify(data));
         returnData.data = data;
         resolve(returnData);
         return;
@@ -181,7 +178,6 @@ class PolicyAgent{
           item['target'] = target;
           return item;
         });
-        // console.log('listAttachedPolicies:', JSON.stringify(returnData));
         resolve(returnData);
         return;
       });
