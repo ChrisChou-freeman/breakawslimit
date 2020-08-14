@@ -1,5 +1,5 @@
-const policyManage = require('../src/aws_iot_agent/policy_agent.js');
-const awsIotAgent = require('../src/aws_iot_agent');
+const policyManage = require('../lib/aws_iot_agent/policy_agent.js');
+const awsIotAgent = require('../lib/aws_iot_agent');
 
 const policyObj = new policyManage();
 const thingObj = new awsIotAgent.ThingAgent();
@@ -30,14 +30,15 @@ thingObj.listThingPrincipals('test_thing_chris')
   .then((data)=>{
     // console.log(data);
     const principals = data.data.principals;
-    for(let i=0;i<principals.length;i++){
-      const element = principals[i];
-      policyObj.listAttachedPolicies(element)
-        .then((data)=>{
-          console.log(JSON.stringify(data));
-          console.log(data.data.attachedPolicies.length);
-          console.log('-------------');
-          console.log('-------------');
-        })
-    }
+    console.log(principals);
+    // for(let i=0;i<principals.length;i++){
+    //   const element = principals[i];
+    //   policyObj.listAttachedPolicies(element)
+    //     .then((data)=>{
+    //       console.log(JSON.stringify(data));
+    //       console.log(data.data.attachedPolicies.length);
+    //       console.log('-------------');
+    //       console.log('-------------');
+    //     })
+    // }
   });

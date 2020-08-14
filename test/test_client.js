@@ -22,6 +22,22 @@ class CertManagerClient{
     );
   }
 
+  getRpcDeadLine(level=1){
+    let timeOut;
+    switch(level){
+      case 1:
+        timeOut = 10000;
+        break;
+      case 2:
+        timeOut = 15000;
+        break;
+      case 3:
+        timeOut = 20000;
+        break;
+    }
+    return new Date(Date.now()+timeOut);
+  }
+
   async requestSender(args){
     return new Promise((resolve)=>{
       const {
@@ -30,7 +46,7 @@ class CertManagerClient{
       } = args;
       const returnData = {error: null, data: null};
       const packData = {data: JSON.stringify(data)}
-      this.client[option](packData, (err, response)=>{
+      this.client[option](packData, {deadline: this.getRpcDeadLine(3)}, (err, response)=>{
         if(err){
           returnData.error = err;
           resolve(returnData);
