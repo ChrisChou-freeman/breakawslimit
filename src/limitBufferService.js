@@ -3,7 +3,7 @@ const util = require('util');
 const Events = require('events');
 
 const conf = require('../conf.js');
-const logger = require('../lib/logger.js');
+// const logger = require('../lib/logger.js');
 const redisCli = require('../lib/redis.js');
 const tools = require('../lib/tools.js');
 const awsIotAgent = require('../lib/aws_iot_agent');
@@ -48,11 +48,13 @@ function registerEvent(eventValue, callback){
   const taskErrEvent = eventValue + '_Error';
   ServerFeedbackEvent.addListener(taskSuccessEvent, function(){
     const responseData = {status: true, info: 'Success'};
+    console.log(JSON.stringify(responseData));
     callback(null, {response: JSON.stringify(responseData)});
     return;
   });
   ServerFeedbackEvent.addListener(taskErrEvent, function(){
     const responseData = {status: false, info: '503'};
+    console.log(JSON.stringify(responseData));
     callback(null, {response: JSON.stringify(responseData)});
     return;
   });
@@ -69,7 +71,8 @@ async function deleteTask(args){
   const queName = conf.queueConfig.redisMainTaskSet;
   const remResult = await redisConn.srem(queName, md5Value);
   if(remResult.error){
-    logger.loggerError.info('deleteTaskErr>>', remResult.error.stack);
+    // logger.loggerError.info('deleteTaskErr>>', remResult.error.stack);
+    console.error('deleteTaskErr>>', remResult.error.stack);
     returnData.error = new Error('deleteTaskErr');
     return returnData;
   }
@@ -87,7 +90,8 @@ async function popQueueItem(args) {
 
   const result = await redisConn.rpop(queName);
   if(result.error){
-    logger.loggerError.info('popQueueItemErr>>>', result.error.stack);
+    // logger.loggerError.info('popQueueItemErr>>>', result.error.stack);
+    console.error('popQueueItemErr>>>', result.error.stack);
     returnData.error = result.error;
     return returnData;
   }
@@ -122,7 +126,8 @@ async function createCert(req, callback){
   const redisConn = new redisCli();
   const connectResult = await redisConn.connect();
   if(connectResult.error){
-    logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    // logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    console.error('redisConnErr>>', connectResult.error.stack);
     responseData.info = '503';
     callback(null, {response: JSON.stringify(responseData)});
     return;
@@ -153,13 +158,15 @@ async function createCert(req, callback){
   const addResult = resultList[1];
   if(pushResult.error){
     responseData.info = '503';
-    logger.loggerError.info('CreateCertificateQueueLpushErr>>', pushResult.error.stack);
+    // logger.loggerError.info('CreateCertificateQueueLpushErr>>', pushResult.error.stack);
+    console.error('CreateCertificateQueueLpushErr>>', pushResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   if(addResult.error){
     responseData.info = '503';
-    logger.loggerError.info('CreateCertificateQueueSaddErr>>', addResult.error.stack);
+    // logger.loggerError.info('CreateCertificateQueueSaddErr>>', addResult.error.stack);
+    console.error('CreateCertificateQueueSaddErr>>', addResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
@@ -192,7 +199,8 @@ async function updateCert(req, callback){
   const redisConn = new redisCli();
   const connectResult = await redisConn.connect();
   if(connectResult.error){
-    logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    // logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    console.error('redisConnErr>>', connectResult.error.stack);
     responseData.info = '503';
     callback(null, {response: JSON.stringify(responseData)});
     return;
@@ -224,13 +232,15 @@ async function updateCert(req, callback){
   const addResult = resultList[1];
   if(pushResult.error){
     responseData.info = '503';
-    logger.loggerError.info('updateCertificateQueueLpushErr>>', pushResult.error.stack);
+    // logger.loggerError.info('updateCertificateQueueLpushErr>>', pushResult.error.stack);
+    console.error('updateCertificateQueueLpushErr>>', pushResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   if(addResult.error){
     responseData.info = '503';
-    logger.loggerError.info('updateCertificateQueueSaddErr>>', addResult.error.stack);
+    // logger.loggerError.info('updateCertificateQueueSaddErr>>', addResult.error.stack);
+    console.error('updateCertificateQueueSaddErr>>', addResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
@@ -258,7 +268,8 @@ async function revokeCert(req, callback){
   const redisConn = new redisCli();
   const connectResult = await redisConn.connect();
   if(connectResult.error){
-    logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    // logger.loggerError.info('redisConnErr>>', connectResult.error.stack);
+    console.error('redisConnErr>>', connectResult.error.stack);
     responseData.info = '503';
     callback(null, {response: JSON.stringify(responseData)});
     return;
@@ -289,13 +300,15 @@ async function revokeCert(req, callback){
   const addResult = resultList[1];
   if(pushResult.error){
     responseData.info = '503';
-    logger.loggerError.info('RevokeCertificateQueueLpushErr>>', pushResult.error.stack);
+    // logger.loggerError.info('RevokeCertificateQueueLpushErr>>', pushResult.error.stack);
+    console.error('RevokeCertificateQueueLpushErr>>', pushResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
   if(addResult.error){
     responseData.info = '503';
-    logger.loggerError.info('RevokeCertificateQueueSaddErr>>', addResult.error.stack);
+    // logger.loggerError.info('RevokeCertificateQueueSaddErr>>', addResult.error.stack);
+    console.error('RevokeCertificateQueueSaddErr>>', addResult.error.stack);
     callback(null, {response: JSON.stringify(responseData)});
     return;
   }
@@ -322,7 +335,6 @@ async function handelResult(args){
   const subMession = conf.queueConfig[taskName][step]['subMession'];
   const jumpCondition = conf.queueConfig[taskName][step]['jumpCondition'];
 
-  console.log(`step:${step} dataResult>>>`, dataResult.error);
 
   if(dataResult.error){
     if(dataPool[resultIndex].errTime === undefined){
@@ -339,7 +351,8 @@ async function handelResult(args){
     dataPool[resultIndex].errTime++;
     const pushResult = await redisConn.lpush(currentQueueName, JSON.stringify(dataPool[resultIndex]));
     if(pushResult.error){
-      logger.loggerError.info(`${currentQueueName} Step${step} Err>>`, pushResult.error.stack);
+      // logger.loggerError.info(`${currentQueueName} Step${step} Err>>`, pushResult.error.stack);
+      console.error(`${currentQueueName} Step${step} Err>>`, pushResult.error.stack);
       await deleteTask({
         redisConn: redisConn,
         md5Value: dataPool[resultIndex].md5Value
@@ -384,12 +397,10 @@ async function handelResult(args){
         if(subMession != undefined
           && subMessionIndex == subMessionLength-1
           && common.isEmptyArray(dataPool[resultIndex][conditionArg])){
-          console.log('need jumpCondition ');
           jumpValue = step + parseInt(jumpLocation);
         }else if(common.isEmptyObj(dataPool[resultIndex][conditionArg])
           || common.isEmptyArray(dataPool[resultIndex][conditionArg])){
           jumpValue = step + parseInt(jumpLocation);
-          console.log('need jumpCondition ');
         }
         break;
     }
@@ -431,16 +442,10 @@ async function handelResult(args){
 
   let pushResult2;
   if(subMession === undefined){
-    console.log('nextStep:', nextStep);
-    console.log('taskName:', taskName);
-    console.log('dataPool:', JSON.stringify(dataPool[resultIndex]));
     pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
   }else{
     if(subMessionIndex == subMessionLength-1){
       if(dataPool[resultIndex][subMessionProcessName] >= dataPool[resultIndex][subMession].length){
-        console.log('nextStep:', nextStep);
-        console.log('taskName:', taskName);
-        console.log('dataPool:', JSON.stringify(dataPool[resultIndex]));
         dataPool[resultIndex][subMessionProcessName] = 0;
         pushResult2 = await redisConn.lpush(conf.queueConfig[taskName][nextStep].name, JSON.stringify(dataPool[resultIndex]));
       }else{
@@ -450,7 +455,8 @@ async function handelResult(args){
   }
 
   if(pushResult2 != undefined && pushResult2.error){
-    logger.loggerError.info(`${currentQueueName} Step${step} Err2>>`, pushResult2.error.stack);
+    // logger.loggerError.info(`${currentQueueName} Step${step} Err2>>`, pushResult2.error.stack);
+    console.error(`${currentQueueName} Step${step} Err2>>`, pushResult2.error.stack);
     await deleteTask({
       redisConn: redisConn,
       md5Value: dataPool[resultIndex].md5Value
@@ -480,7 +486,8 @@ async function sendTask(args){
   taskStepStatus[taskName][step] = true;
 
   if(!taskFunctin){
-    logger.loggerError.info('sendTaskFuncNameErr>>', funcName);
+    // logger.loggerError.info('sendTaskFuncNameErr>>', funcName);
+    console.error('sendTaskFuncNameErr>>', funcName);
     return;
   }
 
@@ -653,7 +660,8 @@ function runConfigTask(args){
             taskName: taskName
           });
         }catch(error){
-          logger.loggerError.info('sendTaskErr>>>', error.stack);
+          // logger.loggerError.info('sendTaskErr>>>', error.stack);
+          console.error('sendTaskErr>>>', error.stack);
           taskStepStatus[taskName][step] = false;
         }
       }

@@ -20,7 +20,6 @@ const thingObj = new awsIotAgent.ThingAgent();
 //   });
 //
 
-
 // policyObj.detachPolicy('arn:aws:iot:us-west-2:222294582284:cert/47a15550023d92f7afd7c073186e8ca120d40d3194bd6c7f33842c4bf1500f02', 'test_policy_chris15' )
 //   .then((data)=>{
 //     console.log(data);
