@@ -85,4 +85,4 @@ project break aws limit
 ----------------------
 
 原来打算用log4js去管理日志，但是会又要造一堆轮子起管理维护日志，遂放弃，
-pm2集成日志管理组件，关于日志大小和日志打包用pm2的官方组件[pm2-logrotate](https://github.com/keymetrics/pm2-logrotate#configure)
+pm2集成日志管理组件，关于单个日志大小限制和日志打包用pm2的官方组件[pm2-logrotate](https://github.com/keymetrics/pm2-logrotate#configure)
