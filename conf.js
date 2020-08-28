@@ -1,6 +1,6 @@
 'use strict';
-exports.debug = true;
 const logRoot = __dirname;
+exports.debug = true;
 exports.infoLogPath = logRoot + '/log/info.log';
 exports.errLogPath = logRoot + '/log/err.log';
 exports.protosPath = __dirname + '/protos/limit_server_buffer.proto';
